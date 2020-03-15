@@ -1,0 +1,34 @@
+name: spoiler-tagger
+channels:
+  - anaconda
+  - conda-forge
+  - jirinovo
+  - bioconda
+  - rdkit
+  - defaults
+dependencies:
+  - beautifulsoup4=4.8.2=py37_0
+  - ca-certificates=2020.1.1=0
+  - certifi=2019.11.28=py37_0
+  - openssl=1.1.1=h7b6447c_0
+  - soupsieve=1.9.5=py37_0
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=0_gnu
+  - ld_impl_linux-64=2.33.1=h53a641e_8
+  - libffi=3.2.1=he1b5a44_1006
+  - libgcc-ng=9.2.0=h24d8f2e_2
+  - libgomp=9.2.0=h24d8f2e_2
+  - libstdcxx-ng=9.2.0=hdf63c60_2
+  - ncurses=6.1=hf484d3e_1002
+  - pip=20.0.2=py_2
+  - python=3.7.6=h357f687_4_cpython
+  - python_abi=3.7=1_cp37m
+  - readline=8.0=hf8c457e_0
+  - setuptools=46.0.0=py37hc8dfbb8_2
+  - sqlite=3.30.1=hcee41ef_0
+  - tk=8.6.10=hed695b0_0
+  - wheel=0.34.2=py_1
+  - xz=5.2.4=h14c3975_1001
+  - zlib=1.2.11=h516909a_1006
+prefix: /home/interferon/anaconda3/envs/spoiler-tagger
+
