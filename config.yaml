@@ -1,0 +1,8 @@
+scraper:
+  debug_mode: true
+  resetera:
+    base_url: "https://www.resetera.com"
+    url_regex: "{}/threads/{}/page-{}"
+    thread_urls:
+      - psa-use-spoiler-not-hide.3028
+      - red-dead-redemption-ii-spoiler-thread.75874

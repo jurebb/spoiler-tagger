@@ -5,20 +5,21 @@ import requests
 # handle nested spoilers -- CHECK, captures them all. -- see post 26 in test thread (psa-use-spoiler-not-hide.3028)
 # remove quotations
 # remove other noise (e.g. \n\n\n)
-# move debug and url stuff to config
+# move debug and url stuff to config -- CHECK
 
-DEBUG = True
 
-def get_page_urls(html):
-    soup = BeautifulSoup(html, 'lxml')
-
-    # Find the number of pages in navbar
+def get_number_of_pages(response_text):
+    """
+    Find the number of pages in navbar
+    :param response_text: response text in str format
+    :return: total number of pages
+    """
+    soup = BeautifulSoup(response_text, 'lxml')
     number_of_pages = int(soup.find(class_='pageNavSimple-el').text.replace('\n', '').split(' of ')[-1])
-
     return number_of_pages
 
 
-def store_link(html, post_number):
+def store_link(html, post_number, debug_mode=False):
     soup = BeautifulSoup(html, 'lxml')
 
     # Display/store all of the links
@@ -43,7 +44,7 @@ def store_link(html, post_number):
         post_data['spoilers'] = spoilers
         post_data['contains_spoiler_tags'] = post_data['number_of_spoiler_tags'] > 0
 
-        if DEBUG:
+        if debug_mode:
             print('ˇ' * 60)
             print(post_data['message_text'])
             print('^' * 60)
@@ -59,25 +60,31 @@ def store_link(html, post_number):
     return post_number
 
 
-if __name__ == '__main__':
-
-    posts_list = list()
+def scrape_thread(url_regex, base_url, thread_url, debug_mode):
     page_number = 1
     post_number = 1
+
     jar = requests.cookies.RequestsCookieJar()
-    base_url = 'https://www.resetera.com'
-    # psa-use-spoiler-not-hide.3028
-    # red-dead-redemption-ii-spoiler-thread.75874
-    thread_url = 'psa-use-spoiler-not-hide.3028'
-    url_regex = '{}/threads/{}/page-{}'
     url = url_regex.format(base_url, thread_url, page_number)
 
     # Determining the number of pages
     response = requests.get(url, cookies=jar)
-    number_of_pages = get_page_urls(response.text)
+    number_of_pages = get_number_of_pages(response.text)
 
     for page_number in range(1, number_of_pages + 1):
         url = url_regex.format(base_url, thread_url, page_number)
         print('Page {} of {}\n > url: {}'.format(page_number, number_of_pages, url))
         response = requests.get(url, cookies=jar)
-        post_number = store_link(response.text, post_number)
+        post_number = store_link(response.text, post_number, debug_mode)
+
+
+def scrape_page(config, debug_mode=False):
+    """
+    :param config: dict-like project config object
+    :return:
+    """
+    for thread_url in config['thread_urls']:
+        scrape_thread(url_regex=config['url_regex'],
+                      base_url=config['base_url'],
+                      thread_url=thread_url,
+                      debug_mode=debug_mode)
