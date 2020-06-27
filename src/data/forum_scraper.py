@@ -1,12 +1,17 @@
+from src.common import utils
+from src.common import constants
 from bs4 import BeautifulSoup
 import requests
+import datetime
+import os
+import time
 
 
 class ForumScraper:
     """
     Scrapes text posts/messages from an online forum/message board and stores them into file(s)
     """
-    def __init__(self, config, debug_mode=False):
+    def __init__(self, config, forum_name, debug_mode=False, sleep_time=1):
         """
 
         :param config: specifies the configuration -- behaviour
@@ -16,9 +21,18 @@ class ForumScraper:
         self.base_url: str = self._config['base_url']
         self.thread_urls = self._config['thread_urls']
         self._debug_mode = debug_mode
+        self._sleep_time = sleep_time
 
-    def _store_link(self, html, post_number, thread_id):
+        self._post_number = None
+
+        self._directory = os.path.join(constants.SCRAPED_DATA_DIR, forum_name)
+        if not os.path.exists(self._directory):
+            os.makedirs(self._directory)
+
+    def _scrape_page(self, html, thread_id):
         soup = BeautifulSoup(html, 'lxml')
+
+        all_posts_data = list()
 
         # Display/store all of the links
         for post in soup.select('.message-content'):
@@ -32,7 +46,7 @@ class ForumScraper:
             post_data['thread_id'] = thread_id
 
             post_data['post_id'] = post.div['data-lb-id']
-            post_data['raw_message_content'] = post.article.div
+            post_data['raw_message_content'] = str(post.article.div)
             post_data['message_text'] = post.article.div.text
 
             all_spoiler_tags = post.article.div.select('.bbCodeBlock--spoiler')
@@ -44,13 +58,14 @@ class ForumScraper:
 
             post_data['spoilers'] = spoilers
             post_data['contains_spoiler_tags'] = post_data['number_of_spoiler_tags'] > 0
+            post_data['post_number'] = self._post_number
 
             if self._debug_mode:
                 # Print post details to stdout
                 print('ˇ' * 60)
                 print(post_data['message_text'])
                 print('^' * 60)
-                print('#{}'.format(post_number))
+                print('#{}'.format(self._post_number))
                 print('thread_id', post_data['thread_id'])
                 print('post_id', post_data['post_id'])
                 print('contains_spoiler_tags', post_data['contains_spoiler_tags'])
@@ -59,27 +74,32 @@ class ForumScraper:
                 print('=' * 60)
                 print()
 
-            post_number += 1
+            self._post_number += 1
+            all_posts_data.append(post_data)
 
-        return post_number
+        return all_posts_data
 
     def _scrape_thread(self, thread_url):
+        thread_data = list()
         page_number = 1
-        post_number = 1
+        self._post_number = 1
         thread_id = thread_url.split('.')[-1]
 
         jar = requests.cookies.RequestsCookieJar()
         url = self.url_regex.format(self.base_url, thread_url, page_number)
 
         # Determining the number of pages
-        response = requests.get(url, cookies=jar)
+        response = requests.get(url, cookies=jar, timeout=10)
         number_of_pages = ForumScraper._get_number_of_pages(response.text)
 
         for page_number in range(1, number_of_pages + 1):
             url = self.url_regex.format(self.base_url, thread_url, page_number)
             print('Page {} of {}\n > url: {}'.format(page_number, number_of_pages, url))
             response = requests.get(url, cookies=jar)
-            post_number = self._store_link(response.text, post_number, thread_id)
+            thread_data.extend(self._scrape_page(response.text,  thread_id))
+            time.sleep(self._sleep_time)
+
+        return thread_data, thread_id
 
     @staticmethod
     def _get_number_of_pages(response_text):
@@ -97,4 +117,14 @@ class ForumScraper:
         :return:
         """
         for thread_url in self.thread_urls:
-            self._scrape_thread(thread_url=thread_url)
+            thread_data, thread_id = self._scrape_thread(thread_url=thread_url)
+            date_time_stamp = datetime.datetime.now().strftime("%d-%b-%Y-%H-%M-%S-%f")
+            data_for_file = {
+                'thread_id': thread_id,
+                'thread_url': thread_url,
+                'thread_data': thread_data,
+                'scraped_datetime': date_time_stamp,
+            }
+
+            file_path = os.path.join(self._directory, "thread_{}.json".format(thread_url))
+            utils.save_thread(file_path, data_for_file)
