@@ -45,7 +45,11 @@ class ForumScraper:
 
             post_data['thread_id'] = thread_id
 
-            post_data['post_id'] = post.div['data-lb-id']
+            if post.select('div')[0]['class'][1] == 'messageNotice--warning':
+                # user banned message warning:
+                post_data['post_id'] = post.select('div')[1]['data-lb-id']
+            else:
+                post_data['post_id'] = post.div['data-lb-id']
             post_data['raw_message_content'] = str(post.article.div)
             post_data['message_text'] = post.article.div.text
 
