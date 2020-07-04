@@ -1,4 +1,4 @@
-from src.data.forum_scraper import ForumScraper
+from src.scraper.forum_scraper import ForumScraper
 from src.common import utils
 from src.common import constants
 

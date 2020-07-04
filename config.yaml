@@ -1,5 +1,6 @@
 scraper:
   debug_mode: false
+
   resetera:
     base_url: "https://www.resetera.com"
     url_regex: "{}/threads/{}/page-{}"
