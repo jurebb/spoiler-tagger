@@ -29,7 +29,7 @@ class ForumScraper:
         if not os.path.exists(self._directory):
             os.makedirs(self._directory)
 
-    def _scrape_page(self, html, thread_id):
+    def _scrape_page(self, html, thread_id, aux_thread_data):
         soup = BeautifulSoup(html, 'lxml')
 
         all_posts_data = list()
@@ -42,6 +42,10 @@ class ForumScraper:
 
             post_data = dict()
             spoilers = list()
+
+            # copy aux thread data into post_data of every single post in thread
+            for key, value in aux_thread_data.items():
+                post_data[key] = value
 
             post_data['thread_id'] = thread_id
 
@@ -83,7 +87,7 @@ class ForumScraper:
 
         return all_posts_data
 
-    def _scrape_thread(self, thread_url):
+    def _scrape_thread(self, thread_url, aux_thread_data):
         thread_data = list()
         page_number = 1
         self._post_number = 1
@@ -98,12 +102,12 @@ class ForumScraper:
 
         for page_number in range(1, number_of_pages + 1):
             url = self.url_regex.format(self.base_url, thread_url, page_number)
-            print('Page {} of {}\n > url: {}'.format(page_number, number_of_pages, url))
+            print('> page {} of {}\n > url: {}'.format(page_number, number_of_pages, url))
             response = requests.get(url, cookies=jar)
-            thread_data.extend(self._scrape_page(response.text,  thread_id))
+            thread_data.extend(self._scrape_page(response.text,  thread_id, aux_thread_data))
             time.sleep(self._sleep_time)
 
-        return thread_data, thread_id
+        return thread_data
 
     @staticmethod
     def _get_number_of_pages(response_text):
@@ -121,14 +125,12 @@ class ForumScraper:
         :return:
         """
         for thread_url in self.thread_urls:
-            thread_data, thread_id = self._scrape_thread(thread_url=thread_url)
             date_time_stamp = datetime.datetime.now().strftime("%d-%b-%Y-%H-%M-%S-%f")
-            data_for_file = {
-                'thread_id': thread_id,
+            auxiliary_thread_data = {
                 'thread_url': thread_url,
-                'thread_data': thread_data,
                 'scraped_datetime': date_time_stamp,
             }
+            thread_data = self._scrape_thread(thread_url=thread_url, aux_thread_data=auxiliary_thread_data)
 
             file_path = os.path.join(self._directory, "thread_{}.json".format(thread_url))
-            utils.save_thread(file_path, data_for_file)
+            utils.save_thread(file_path, thread_data, jsonl=True)

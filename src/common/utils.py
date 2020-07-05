@@ -21,6 +21,12 @@ def load_config(path_to_config):
     return config
 
 
-def save_thread(filename, data):
-    with open(filename, 'w') as file:
-        json.dump(data, file)
+def save_thread(filename, data, jsonl=False):
+    if not jsonl:
+        with open(filename, 'w') as file:
+            json.dump(data, file)
+    else:
+        with open(filename, 'w') as file:
+            for entry in data:
+                json.dump(entry, file)
+                file.write('\n')
