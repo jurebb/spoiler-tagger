@@ -1,5 +1,6 @@
 from src.common import utils
 from src.common import constants
+from src.common.bigquery import utils as bigquery_utils
 from bs4 import BeautifulSoup
 import requests
 import datetime
@@ -134,3 +135,12 @@ class ForumScraper:
 
             file_path = os.path.join(self._directory, "thread_{}.json".format(thread_url))
             utils.save_thread(file_path, thread_data, jsonl=True)
+
+    @staticmethod
+    def upload_to_bigquery(json_filename, project_id, dataset_id, target_table_id, target_table_location):
+        bigquery_utils.append_json_to_existing_table(json_filename=json_filename,
+                                                     project_id=project_id,
+                                                     dataset_id=dataset_id,
+                                                     target_table_id=target_table_id,
+                                                     target_table_location=target_table_location,
+                                                     )
