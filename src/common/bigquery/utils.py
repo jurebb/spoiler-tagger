@@ -2,6 +2,9 @@ from google.cloud import bigquery
 
 
 def append_json_to_existing_table(json_filename, project_id, dataset_id, target_table_id, target_table_location):
+
+    print("BigQuery:")
+
     temp_table_id = "{}_temp_table".format(target_table_id)
 
     client = bigquery.Client()
@@ -22,8 +25,21 @@ def append_json_to_existing_table(json_filename, project_id, dataset_id, target_
 
     job.result()  # Waits for table load to complete.
 
-    print("> loaded {} rows into {}:{}.".format(job.output_rows, dataset_id, temp_table_id))
+    print(" > loaded {} rows into {}:{}.".format(job.output_rows, dataset_id, temp_table_id))
 
     # append temp table to target table
+    query_job = client.query("""
+            INSERT INTO {}.{}.{}
+            SELECT *
+            FROM {}.{}.{}""".format(
+        project_id, dataset_id, target_table_id,
+        project_id, dataset_id, temp_table_id
+    ))
+    query_job.result()
+
+    print(" > inserted rows from {} into {}.".format(temp_table_id, target_table_id))
 
     # delete temp table
+    client.delete_table(table="{}.{}.{}".format(project_id, dataset_id, temp_table_id))
+
+    print(" > deleted table: {}".format(temp_table_id))

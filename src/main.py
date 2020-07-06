@@ -17,10 +17,10 @@ def upload_to_bigquery():
     # TODO automatize, this is only a test
     ForumScraper.upload_to_bigquery(
         json_filename="../data/scraped_data/resetera/thread_red-dead-redemption-ii-spoiler-thread.75874.json",
-        project_id="spoiler-tagger-poc",
-        dataset_id="spoilertaggerpocdb",
+        project_id="spoiler-tagger",
+        dataset_id="spoilers",
         target_table_id="posts",
-        target_table_location="US",
+        target_table_location="EU",
     )
 
 
